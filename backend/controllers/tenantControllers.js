@@ -44,13 +44,21 @@ export const createTenant = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, accessToken } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: "Email is required" });
+    if (!email || !accessToken) {
+      return res
+        .status(400)
+        .json({ error: "Email and accessToken are required" });
     }
 
-    const tenant = await prisma.tenant.findUnique({ where: { email } });
+    const tenant = await prisma.tenant.findUnique({
+      where: {
+        email,
+        accessToken,
+      },
+    });
+
     if (!tenant) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
@@ -59,11 +67,11 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       success: true,
+      message: "Login successful",
       tenant: {
         id: tenant.id,
-        name: tenant.name,
-        shopDomain: tenant.shopDomain,
         email: tenant.email,
+        shopDomain: tenant.shopDomain,
       },
     });
   } catch (err) {

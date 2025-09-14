@@ -137,6 +137,7 @@ export const ingestOrders = async (req, res) => {
 
       const totalPrice = parseFloat(o.total_price || 0);
 
+      // Upsert order
       const savedOrder = await prisma.order.upsert({
         where: { shopifyId: o.id.toString() },
         update: {
@@ -151,6 +152,36 @@ export const ingestOrders = async (req, res) => {
           tenantId: tenant.id,
         },
       });
+
+      // line items → OrderItems
+      if (o.line_items && o.line_items.length > 0) {
+        for (const li of o.line_items) {
+          const product = await prisma.product.findUnique({
+            where: { shopifyId: li.product_id?.toString() },
+          });
+
+          if (product) {
+            await prisma.orderItem.upsert({
+              where: {
+                orderId_productId: {
+                  orderId: savedOrder.id,
+                  productId: product.id,
+                },
+              },
+              update: {
+                quantity: li.quantity,
+                price: parseFloat(li.price || 0),
+              },
+              create: {
+                orderId: savedOrder.id,
+                productId: product.id,
+                quantity: li.quantity,
+                price: parseFloat(li.price || 0),
+              },
+            });
+          }
+        }
+      }
 
       savedOrders.push(savedOrder);
     }

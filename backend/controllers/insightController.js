@@ -70,6 +70,68 @@ export const getOrdersTrend = async (req, res) => {
   }
 };
 
+export const getTopCustomers = async (req, res) => {
+  try {
+    const tenantId = req.tenant.id;
+
+    const customers = await prisma.customer.findMany({
+      where: { tenantId },
+      orderBy: { totalSpent: "desc" }, // highest spend first
+      take: 5,
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        totalSpent: true,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      customers,
+    });
+  } catch (err) {
+    console.error("Error fetching top customers:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getTopProducts = async (req, res) => {
+  try {
+    const tenantId = req.tenant.id;
+
+    const topProducts = await prisma.orderItem.groupBy({
+      by: ["productId"],
+      where: { order: { tenantId } },
+      _sum: { price: true, quantity: true },
+      orderBy: { _sum: { price: "desc" } },
+      take: 5,
+    });
+
+    const productIds = topProducts.map((p) => p.productId);
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, title: true },
+    });
+
+    const results = topProducts.map((tp) => {
+      const product = products.find((p) => p.id === tp.productId);
+      return {
+        productId: tp.productId,
+        title: product?.title || "Unknown",
+        totalRevenue: tp._sum.price,
+        totalQuantity: tp._sum.quantity,
+      };
+    });
+
+    res.status(200).json({ success: true, products: results });
+  } catch (err) {
+    console.error("Error fetching top products:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const getRevenueOverTime = async (req, res) => {
   try {
     const tenantId = req.tenant.id;

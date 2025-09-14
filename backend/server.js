@@ -2,9 +2,6 @@ import dotenv from "dotenv";
 import express from "express";
 import tenantRouter from "./routes/tenantRoutes.js";
 import ingestRouter from "./routes/ingestRoutes.js";
-import customerRouter from "./routes/customerRoutes.js";
-import productRouter from "./routes/productRoutes.js";
-import orderRouter from "./routes/orderRoutes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import insightRouter from "./routes/insightRoutes.js";
@@ -26,9 +23,6 @@ app.use(cookieParser());
 
 app.use("/api/tenant", tenantRouter);
 app.use("/api/ingest", ingestRouter);
-app.use("/api/customer", customerRouter);
-app.use("/api/product", productRouter);
-app.use("/api/order", orderRouter);
 app.use("/api/insight", insightRouter);
 
 const PORT = process.env.PORT || 5000;

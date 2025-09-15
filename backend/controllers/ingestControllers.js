@@ -43,7 +43,7 @@ export const ingestProducts = async (req, res) => {
       savedProducts.push(savedProduct);
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       products: savedProducts,
     });
@@ -97,7 +97,7 @@ export const ingestCustomers = async (req, res) => {
       savedCustomers.push(savedCustomer);
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       customers: savedCustomers,
     });
@@ -186,12 +186,45 @@ export const ingestOrders = async (req, res) => {
       savedOrders.push(savedOrder);
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       orders: savedOrders,
     });
   } catch (err) {
     console.error("Error ingesting orders:", err);
     res.status(500).json({ error: err.message });
+  }
+};
+
+export const ingestAll = async (req, res) => {
+  const { tenantId } = req.params;
+
+  try {
+    const mockRes = {
+      status: () => mockRes,
+      json: (data) => data,
+    };
+
+    const productResult = await ingestProducts(req, mockRes);
+    if (!productResult.success) throw new Error("Product ingestion failed.");
+
+    const customerResult = await ingestCustomers(req, mockRes);
+    if (!customerResult.success) throw new Error("Customer ingestion failed.");
+
+    const orderResult = await ingestOrders(req, mockRes);
+    if (!orderResult.success) throw new Error("Order ingestion failed.");
+
+    res.status(200).json({
+      success: true,
+      message: "Full data ingestion completed successfully.",
+      summary: {
+        products: productResult.products.length,
+        customers: customerResult.customers.length,
+        orders: orderResult.orders.length,
+      },
+    });
+  } catch (err) {
+    console.error(`Full ingestion failed for Tenant ID: ${tenantId}`, err);
+    res.status(500).json({ success: false, error: err.message });
   }
 };

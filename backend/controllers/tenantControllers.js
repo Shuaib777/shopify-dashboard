@@ -1,33 +1,46 @@
 import { PrismaClient } from "@prisma/client";
 import generateToken from "../util/authHelper.js";
+import { ingestAll } from "./ingestControllers.js";
 
 const prisma = new PrismaClient();
 
 export const createTenant = async (req, res) => {
+  const { name, shopDomain, accessToken, email, apiKey, apiSecret } = req.body;
+
+  if (!name || !shopDomain || !accessToken || !email || !apiKey || !apiSecret) {
+    return res.status(400).json({
+      error: "All fields are required",
+    });
+  }
+
   try {
-    const { name, shopDomain, accessToken, email, apiKey, apiSecret } =
-      req.body;
-
-    if (
-      !name ||
-      !shopDomain ||
-      !accessToken ||
-      !email ||
-      !apiKey ||
-      !apiSecret
-    ) {
-      return res.status(400).json({
-        error:
-          "Name, shopDomain, accessToken, email, apiKey, and apiSecret are required",
-      });
-    }
-
     const tenant = await prisma.tenant.create({
       data: { name, shopDomain, accessToken, email, apiKey, apiSecret },
     });
 
-    res.json({
+    try {
+      const mockReq = {
+        params: {
+          tenantId: tenant.id,
+        },
+      };
+
+      const mockRes = {
+        status: () => mockRes,
+        json: (data) => data,
+      };
+
+      await ingestAll(mockReq, mockRes);
+    } catch (ingestionError) {
+      console.error(
+        `Initial data ingestion failed for Tenant ${tenant.id}:`,
+        ingestionError
+      );
+    }
+
+    res.status(201).json({
       success: true,
+      message: "Tenant created and initial data sync completed.",
       tenant: {
         id: tenant.id,
         name: tenant.name,
@@ -38,7 +51,13 @@ export const createTenant = async (req, res) => {
     });
   } catch (err) {
     console.error("Error creating tenant:", err);
-    res.status(500).json({ error: err.message });
+    if (err.code === "P2002") {
+      return res.status(409).json({
+        success: false,
+        error: "A tenant with this shop domain or email already exists.",
+      });
+    }
+    res.status(500).json({ success: false, error: err.message });
   }
 };
 

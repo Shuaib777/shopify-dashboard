@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
 import { MdLogout, MdLightMode, MdDarkMode } from "react-icons/md";
 import axios from "axios";
+import API_URL from "../config/apiConfig";
 
 const Header = () => {
   const { user, logout } = useContext(UserContext);
@@ -31,7 +32,7 @@ const Header = () => {
 
   const handleSignout = async () => {
     try {
-      const response = await axios.post("/logout", {
+      const response = await axios.post(`${API_URL}/api/tenant/logout`, {
         withCredentials: true,
       });
 

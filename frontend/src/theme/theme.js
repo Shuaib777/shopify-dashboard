@@ -21,7 +21,6 @@ const colors = {
       primary: "#0F0F23",
       secondary: "#1A1B3A",
       tertiary: "#252659",
-      // Gradient backgrounds for cards and components
       cardGradient: "linear-gradient(135deg, #1A1B3A 0%, #252659 100%)",
       headerGradient: "linear-gradient(90deg, #1A1B3A 0%, #252659 100%)",
     },
@@ -43,11 +42,11 @@ const colors = {
   },
   light: {
     bg: {
-      primary: "#f7fafc",
-      secondary: "#ffffff",
-      tertiary: "#edf2f7",
-      cardGradient: "linear-gradient(135deg, #ffffff 0%, #f7fafc 100%)",
-      headerGradient: "linear-gradient(90deg, #ffffff 0%, #f7fafc 100%)",
+      primary: "#EDF2F7",
+      secondary: "#FFFFFF",
+      tertiary: "#E2E8F0",
+      cardGradient: "linear-gradient(135deg, #FFFFFF 0%, #F7FAFC 100%)",
+      headerGradient: "linear-gradient(90deg, #FFFFFF 0%, #F7FAFC 100%)",
     },
     purple: {
       gradient: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
@@ -71,14 +70,9 @@ const components = {
   Card: {
     baseStyle: (props) => ({
       container: {
-        background: mode(
-          "light.bg.cardGradient",
-          "dark.bg.cardGradient"
-        )(props),
+        background: mode("light.bg.secondary", "dark.bg.cardGradient")(props),
         borderRadius: "xl",
-        border: mode("1px solid", "none")(props),
-        borderColor: mode("gray.200", "transparent")(props),
-        boxShadow: mode("sm", "xl")(props),
+        boxShadow: mode("lg", "xl")(props),
         backdropFilter: "blur(10px)",
       },
     }),

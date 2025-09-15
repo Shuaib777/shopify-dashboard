@@ -231,7 +231,7 @@ const OrderTrend = () => {
         <HStack justify="space-between">
           <Box>
             <Heading size="md" color={headingColor}>
-              Orders Overview
+              Orders Trend
             </Heading>
             <Text fontSize="sm" color="green.400">
               (+5%) more in 2025

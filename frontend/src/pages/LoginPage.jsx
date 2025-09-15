@@ -9,7 +9,10 @@ import {
   Stack,
   Button,
   Heading,
-  useColorModeValue,
+  useToast, // Switched from alert to useToast for better UI
+  Card, // ✅ Import the Card component
+  CardBody,
+  CardHeader,
 } from "@chakra-ui/react";
 import { useContext, useState } from "react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
@@ -20,6 +23,7 @@ import { UserContext } from "../context/UserContext";
 
 const LoginPage = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [inputs, setInputs] = useState({
     email: "",
     accessToken: "",
@@ -27,13 +31,14 @@ const LoginPage = () => {
 
   const { setUser } = useContext(UserContext);
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const res = await axios.post(`${API_URL}/api/tenant/login`, inputs, {
         withCredentials: true,
       });
-
       const data = res.data;
 
       if (data.success) {
@@ -41,35 +46,32 @@ const LoginPage = () => {
         localStorage.setItem("tenant", JSON.stringify(data.tenant));
         navigate("/dashboard");
       } else {
-        alert("Login failed: " + data.message);
+        toast({
+          title: "Login Failed",
+          description: data.message,
+          status: "error",
+        });
       }
     } catch (err) {
+      toast({
+        title: "Login Error",
+        description: "Please check credentials or server.",
+        status: "error",
+      });
       console.error("Error logging in:", err);
-      alert("Login failed. Please check your credentials or server.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Flex
-      align={"center"}
-      justify={"center"}
-      minH="100vh"
-      bg={useColorModeValue("gray.50", "gray.900")}
-    >
-      <Stack spacing={8} mx={"auto"} maxW={"lg"} py={12} px={6}>
-        <Stack align={"center"}>
-          <Heading fontSize={"4xl"} textAlign={"center"}>
-            Tenant Login
-          </Heading>
-        </Stack>
-        <Box
-          rounded={"lg"}
-          bg={useColorModeValue("white", "gray.800")}
-          boxShadow={"lg"}
-          p={8}
-          w={{ base: "full", md: "400px" }}
-        >
-          <Stack spacing={4}>
+    <Flex align={"center"} justify={"center"} minH="100vh">
+      <Card maxW={"lg"} w={{ base: "full", md: "420px" }}>
+        <CardHeader>
+          <Heading textAlign={"center"}>Tenant Login</Heading>
+        </CardHeader>
+        <CardBody>
+          <Stack spacing={6}>
             <FormControl id="email" isRequired>
               <FormLabel>Email</FormLabel>
               <Input
@@ -78,6 +80,7 @@ const LoginPage = () => {
                 onChange={(e) =>
                   setInputs({ ...inputs, email: e.target.value })
                 }
+                placeholder="tenant@example.com"
               />
             </FormControl>
             <FormControl id="accessToken" isRequired>
@@ -89,6 +92,7 @@ const LoginPage = () => {
                   onChange={(e) =>
                     setInputs({ ...inputs, accessToken: e.target.value })
                   }
+                  placeholder="shpat_xxxxxxxxxx"
                 />
                 <InputRightElement h={"full"}>
                   <Button
@@ -100,21 +104,20 @@ const LoginPage = () => {
                 </InputRightElement>
               </InputGroup>
             </FormControl>
-            <Stack spacing={10} pt={4}>
+            <Stack pt={4}>
               <Button
-                loadingText="Submitting"
+                variant="gradient"
                 size="lg"
-                bg={useColorModeValue("blue.600", "blue.700")}
-                color={"white"}
-                _hover={{ bg: useColorModeValue("blue.700", "blue.800") }}
                 onClick={handleLogin}
+                isLoading={loading}
+                loadingText="Logging In..."
               >
                 Login
               </Button>
             </Stack>
           </Stack>
-        </Box>
-      </Stack>
+        </CardBody>
+      </Card>
     </Flex>
   );
 };

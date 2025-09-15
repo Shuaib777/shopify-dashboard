@@ -15,6 +15,7 @@ import Header from "../components/Header";
 import Summary from "../components/Summary";
 import OrderTrend from "../components/OrderTrend";
 import Table from "../components/Table";
+import OrderOverview from "../components/OrderOverview";
 
 const Dashboard = () => {
   const [topCustomers, setTopCustomers] = useState([]);
@@ -77,6 +78,7 @@ const Dashboard = () => {
       <Container maxW="container.xl" py={6}>
         <VStack spacing={8} align="stretch">
           <Summary />
+          <OrderOverview />
           <OrderTrend />
           <Table title={"TOP 5 ORDERS"} tableData={topCustomers} />
           <Table title={"TOP 5 PRODUCTS"} tableData={topProducts} />

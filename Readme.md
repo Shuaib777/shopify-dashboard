@@ -468,31 +468,3 @@ Get a paginated and sortable list of individual orders, with options for date fi
 | `DATABASE_URL` | PostgreSQL connection string     | Yes      | `postgresql://user:password@localhost:5432/shopifydb` |
 | `JWT_SECRET`   | Secret key for JWT token signing | Yes      | `your_jwt_secret`                                     |
 | `PORT`         | Server port number               | No       | `5000` (default)                                      |
-
-## 💡 Usage Examples
-
-### Authentication Example
-
-```javascript
-// Login
-const response = await fetch("/login", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    email: "tenant@example.com",
-    accessToken: "shpat_xxxxxx",
-    storeDomain: "myshop.myshopify.com",
-  }),
-});
-
-// Get insights (cookie automatically included)
-const insights = await fetch("/api/insight/summary");
-```
-
-### Fetching Revenue Data
-
-```javascript
-const revenueData = await fetch(
-  "/api/insight/revenue?startDate=2025-08-01&endDate=2025-09-14&interval=weekly"
-);
-```

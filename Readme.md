@@ -6,6 +6,7 @@ A multi-tenant service that ingests data from Shopify (Products, Customers, Orde
 
 - [Features](#-features)
 - [Architecture](#-architecture)
+- [Database Schema](#-database-schema)
 - [Authentication Flow](#-authentication-flow)
 - [API Documentation](#-api-documentation)
 - [Setup & Installation](#-setup--installation)
@@ -33,6 +34,154 @@ This service is built using:
 - **JWT** for secure authentication
 - **Cookie-based** session management
 - **Multi-tenant** architecture for data isolation
+
+### Architecture Overview
+
+The service follows a multi-tenant architecture where each Shopify store operates as an isolated tenant:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  Shopify Store 1│    │  Shopify Store 2│    │  Shopify Store 3│
+│                 │    │                 │    │                 │
+│ Orders,Products,│    │ Orders,Products,│    │ Orders,Products,│
+│ Customers       │    │ Customers       │    │ Customers       │
+└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 │
+                    ┌─────────────▼─────────────┐
+                    │     Ingestion API         │
+                    │   (Server will expose     │
+                    │   ingestion APIs and      │
+                    │   get APIs)               │
+                    └─────────────┬─────────────┘
+                                 │
+                    ┌─────────────▼─────────────┐
+                    │   Database Storage        │
+                    │ (Server will store the    │
+                    │  ingested data in this    │
+                    │  database)               │
+                    └─────────────┬─────────────┘
+                                 │
+          ┌──────────────────────┼──────────────────────┐
+          │                      │                      │
+┌─────────▼───────┐    ┌─────────▼───────┐    ┌─────────▼───────┐
+│ Tenant 1        │    │ Tenant 2        │    │ Tenant 3        │
+│ Dashboard       │    │ Dashboard       │    │ Dashboard       │
+│                 │    │                 │    │                 │
+│ Charts and      │    │ Charts and      │    │ Charts and      │
+│ Analytics       │    │ Analytics       │    │ Analytics       │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+```
+
+### Data Model Relationships
+
+```
+                              ┌─────────┐
+                              │ Tenant  │
+                              │ (Store) │
+                              └────┬────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+               ┌────▼────┐    ┌────▼────┐    ┌───▼────┐
+               │Customer │    │ Product │    │ Order  │
+               └────┬────┘    └────┬────┘    └───┬────┘
+                    │              │             │
+                    └──────────────┼─────────────┘
+                                   │
+                              ┌────▼─────┐
+                              │OrderItem │
+                              │(Junction)│
+                              └──────────┘
+```
+
+## 🗄️ Database Schema
+
+The service uses Prisma ORM with PostgreSQL. Here's the complete database schema:
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id          Int       @id @default(autoincrement())
+  name        String
+  shopDomain  String    @unique
+  apiKey      String
+  apiSecret   String
+  accessToken String    @unique
+  email       String    @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  customers   Customer[]
+  products    Product[]
+  orders      Order[]
+}
+
+model Customer {
+  id         Int      @id @default(autoincrement())
+  shopifyId  String   @unique
+  tenantId   Int
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  email      String?
+  firstName  String?
+  lastName   String?
+  totalSpent Float    @default(0)
+  createdAt  DateTime @default(now())
+  orders     Order[]
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  shopifyId String   @unique
+  tenantId  Int
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  title     String
+  price     Float
+  createdAt DateTime @default(now())
+  items     OrderItem[]
+}
+
+model Order {
+  id         Int      @id @default(autoincrement())
+  shopifyId  String   @unique
+  tenantId   Int
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  customerId Int?
+  customer   Customer? @relation(fields: [customerId], references: [id])
+  totalPrice Float
+  createdAt  DateTime @default(now())
+  items      OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Float
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, productId]) // no duplicate product per order
+}
+```
+
+### Schema Key Features:
+
+- **Multi-tenant isolation**: All data models are linked to a `Tenant`
+- **Flexible relationships**: Customers can have multiple orders, orders can have multiple products
+- **Data integrity**: Unique constraints on Shopify IDs and email addresses
+- **Audit trails**: `createdAt` timestamps on all models
+- **Junction table**: `OrderItem` manages the many-to-many relationship between Orders and Products
 
 ## 🔑 Authentication Flow
 
@@ -216,7 +365,7 @@ Analyze your best-performing products by revenue generation.
 }
 ```
 
-# 6. Order Overview
+### 6. Order Overview
 
 Get a paginated and sortable list of individual orders, with options for date filtering.
 

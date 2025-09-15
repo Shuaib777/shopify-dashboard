@@ -5,6 +5,7 @@ import ingestRouter from "./routes/ingestRoutes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import insightRouter from "./routes/insightRoutes.js";
+import webhookRouter from "./routes/webhookRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -16,6 +17,7 @@ app.use(
     credentials: true,
   })
 );
+app.use("/api/webhooks", webhookRouter);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

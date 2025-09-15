@@ -30,7 +30,6 @@ const LoginPage = () => {
 
   const handleLogin = async () => {
     try {
-      console.log(inputs);
       const res = await axios.post(`${API_URL}/api/tenant/login`, inputs, {
         withCredentials: true,
       });

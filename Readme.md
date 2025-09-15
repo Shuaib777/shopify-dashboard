@@ -216,6 +216,60 @@ Analyze your best-performing products by revenue generation.
 }
 ```
 
+# 6. Order Overview
+
+Get a paginated and sortable list of individual orders, with options for date filtering.
+
+**Endpoint:** `GET /api/insight/order-overview`
+
+**Description:** Unlike `orders-trend` which aggregates data, this endpoint returns a list of individual order details. It's ideal for displaying recent orders or browsing through order history.
+
+**Query Parameters:**
+
+- `startDate` (optional) - ISO date string to filter orders created on or after this date.
+- `endDate` (optional) - ISO date string to filter orders created on or before this date.
+- `page` (optional) - The page number for pagination. Default: `1`.
+- `limit` (optional) - The number of orders to return per page. Default: `7`.
+- `sortOrder` (optional) - The sorting direction for `createdAt`. Can be `"asc"` (oldest first) or `"desc"` (latest first). Default: `"desc"`.
+
+**Example:** `GET /api/insight/order-overview?startDate=2025-09-01&limit=5&sortOrder=asc`
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "orders": [
+    {
+      "id": 101,
+      "shopifyId": "fake-order-101",
+      "totalPrice": 3500,
+      "createdAt": "2025-09-02T09:15:00.000Z",
+      "customer": {
+        "firstName": "John",
+        "lastName": "Doe"
+      }
+    },
+    {
+      "id": 102,
+      "shopifyId": "fake-order-102",
+      "totalPrice": 1500,
+      "createdAt": "2025-09-03T11:45:00.000Z",
+      "customer": {
+        "firstName": "Jane",
+        "lastName": "Smith"
+      }
+    }
+  ],
+  "pagination": {
+    "totalOrders": 10,
+    "totalPages": 2,
+    "currentPage": 1,
+    "limit": 5
+  }
+}
+```
+
 ## 🛠️ Setup & Installation
 
 ### Prerequisites

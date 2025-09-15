@@ -1,5 +1,6 @@
 import express from "express";
 import {
+  getOrderOverview,
   getOrdersTrend,
   getRevenueOverTime,
   getSummaryInsights,
@@ -12,6 +13,7 @@ const insightRouter = express.Router();
 
 insightRouter
   .get("/summary", protectRoute, getSummaryInsights)
+  .get("/orders-overview", protectRoute, getOrderOverview)
   .get("/orders-trend", protectRoute, getOrdersTrend)
   .get("/top-customers", protectRoute, getTopCustomers)
   .get("/top-products", protectRoute, getTopProducts)

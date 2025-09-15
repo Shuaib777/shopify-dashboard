@@ -32,6 +32,73 @@ export const getSummaryInsights = async (req, res) => {
   }
 };
 
+export const getOrderOverview = async (req, res) => {
+  const tenantId = req.tenant.id;
+
+  const {
+    startDate,
+    endDate,
+    page = 1,
+    limit = 7,
+    sortOrder = "desc",
+  } = req.query;
+
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  const orderDirection = sortOrder.toLowerCase() === "asc" ? "asc" : "desc";
+
+  try {
+    const where = {
+      tenantId: tenantId,
+    };
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) where.createdAt.gte = new Date(startDate);
+      if (endDate) where.createdAt.lte = new Date(endDate);
+    }
+
+    const [orders, totalOrders] = await prisma.$transaction([
+      prisma.order.findMany({
+        where,
+        select: {
+          id: true,
+          shopifyId: true,
+          totalPrice: true,
+          createdAt: true,
+          customer: {
+            select: {
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: orderDirection,
+        },
+        skip: skip,
+        take: limitNum,
+      }),
+      prisma.order.count({ where }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      orders,
+      pagination: {
+        totalOrders,
+        totalPages: Math.ceil(totalOrders / limitNum),
+        currentPage: pageNum,
+        limit: limitNum,
+      },
+    });
+  } catch (err) {
+    console.error("Error fetching order overview:", err);
+    res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+};
+
 export const getOrdersTrend = async (req, res) => {
   try {
     const tenantId = req.tenant.id;
